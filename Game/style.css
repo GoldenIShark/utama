@@ -1,0 +1,125 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #081620;
+}
+
+/* --- GAME SCREEN RATIO 16:9 --- */
+.game-container {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#gameCanvas {
+  background: #0f2233;
+  width: 100vw;
+  height: calc(100vw * 9 / 16);
+  max-height: 100vh;
+  max-width: calc(100vh * 16 / 9);
+  position: relative;
+  z-index: 1;
+}
+
+/* --- JOYSTICK LEFT BOTTOM --- */
+.joystick-zone {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+.joystick {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: #0a1f2e;
+  position: relative;
+  touch-action: none;
+  z-index: 10;
+}
+
+.joy-base {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: #092434;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  z-index: 10;
+}
+
+.joy-knob {
+  width: 40px;
+  height: 40px;
+  background: #32cd32;
+  border-radius: 50%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+/* --- BOOST BUTTON --- */
+#boostBtn {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 0, 0.3);
+    border: 3px solid yellow;
+    color: white;
+    font-size: 20px;
+    text-shadow: 0 0 3px black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    touch-action: none;
+    z-index: 10;
+}
+
+#boostBtn:active {
+    background: rgba(255, 255, 0, 0.6);
+}
+
+/* --- HP & MANA BARS --- */
+#uiBars {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 300px;
+    z-index: 2;
+}
+
+.bar {
+    width: 100%;
+    height: 20px;
+    background: #333;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.fill {
+    height: 100%;
+    width: 100%;
+    transition: width 0.15s linear;
+}
+
+#hpFill {
+    background: red;
+}
+
+#manaFill {
+    background: blue;
+}
