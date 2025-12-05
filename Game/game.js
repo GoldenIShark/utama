@@ -10,8 +10,8 @@ canvas.height = 720;
 // =======================================
 // SPEED & ENERGY SYSTEM
 // =======================================
-let speedNormal = 100;              // lebih lambat
-let speedBoost = speedNormal * 1.5;
+let speedNormal = 80;              // lebih lambat
+let speedBoost = speedNormal * 2;
 
 let playerEnergy = 100;
 let boosting = false;
@@ -48,7 +48,7 @@ function updateEnergy(dt) {
 
         if (drainTimer >= 0.1) {
             drainTimer = 0;
-            playerEnergy -= 1.5;        // benar: 1.5% / 0.1s
+            playerEnergy -= 2;        // benar: 1.5% / 0.1s
             if (playerEnergy < 0) playerEnergy = 0;
         }
 
@@ -58,7 +58,7 @@ function updateEnergy(dt) {
 
         boosting = false;
 
-        if (regenTimer >= 0.1) {
+        if (regenTimer >= 0.5) {
             regenTimer = 0;
             playerEnergy += 0.5;        // benar: 0.5% / 0.1s
             if (playerEnergy > 100) playerEnergy = 100;
