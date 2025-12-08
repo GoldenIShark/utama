@@ -4,11 +4,11 @@
 
 // daftar map (silakan isi nanti setelah map dibuat)
 const MAP_LIST = {
-    sumatra:   "map/map_sumatra.json",
-    jawa:      "map/map_jawa.json",
-    kalimantan:"map/map_kalimantan.json",
-    sulawesi:  "map/map_sulawesi.json",
-    papua:     "map/map_papua.json"
+    sumatra:   "map/sumatra.json",
+    jawa:      "map/jawa.json",
+    kalimantan:"map/kalimantan.json",
+    sulawesi:  "map/sulawesi.json",
+    papua:     "map/papua.json"
 };
 
 window.currentMap = "";
