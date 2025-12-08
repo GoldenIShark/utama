@@ -2,7 +2,7 @@
 // ELEMENT & VARIABLE DECLARATIONS
 // =======================================
 
-const socket = new WebSocket("wss://" + window.location.host);
+const socket = new WebSocket("wss://nama-repl-kamu.repl.co");
 
 let myID = Math.random().toString(36).slice(2);
 
