@@ -623,5 +623,5 @@ function loop(now) {
 // =======================================
 // LOAD MAP & START GAME
 // =======================================
-loadTilemap("map.json");
+loadRegion("jawa");
 requestAnimationFrame(loop);
