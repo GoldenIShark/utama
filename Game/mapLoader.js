@@ -1,20 +1,19 @@
-// =======================================
+// =============================
 // MAP LOADER SYSTEM
-// =======================================
+// =============================
 
-// Menyimpan map yang sedang aktif
-window.currentMap = "";
-
-// Daftar semua map
+// daftar map (silakan isi nanti setelah map dibuat)
 const MAP_LIST = {
-    sumatra: "map/map_sumatra.json",
-    jawa: "map/map_jawa.json",
-    kalimantan: "map/map_kalimantan.json",
-    sulawesi: "map/map_sulawesi.json",
-    papua: "map/map_papua.json"
+    sumatra:   "map/map_sumatra.json",
+    jawa:      "map/map_jawa.json",
+    kalimantan:"map/map_kalimantan.json",
+    sulawesi:  "map/map_sulawesi.json",
+    papua:     "map/map_papua.json"
 };
 
-// Fungsi utama memuat map baru
+window.currentMap = "";
+
+// fungsi utama untuk mengganti map
 window.loadRegion = function(regionName) {
 
     if (!MAP_LIST[regionName]) {
@@ -23,16 +22,15 @@ window.loadRegion = function(regionName) {
     }
 
     const mapURL = MAP_LIST[regionName];
-    console.log("📌 Load map:", regionName, "->", mapURL);
+    console.log("📌 Loading region:", regionName, "->", mapURL);
 
-    // Reset state game
     window.mapLoaded = false;
     window.tilemap = [];
 
-    // Panggil loader map bawaan dari game.js
+    // panggil loader asli dari game.js
     loadTilemap(mapURL);
 
-    // Reset posisi player ke tengah map
+    // reset posisi player
     world.x = 2000;
     world.y = 2000;
 
