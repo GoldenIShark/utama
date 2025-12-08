@@ -2,6 +2,22 @@
 // ELEMENT & VARIABLE DECLARATIONS
 // =======================================
 
+const socket = new WebSocket("wss://" + window.location.host);
+
+let myID = Math.random().toString(36).slice(2);
+
+socket.onopen = () => {
+    console.log("Connected to multiplayer server");
+};
+
+socket.send(JSON.stringify({
+    id: myID,
+    x: world.x,
+    y: world.y,
+    dir: player.dir,
+    state: player.state
+}));
+
 // Canvas utama
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
