@@ -1,5 +1,5 @@
-import { WebSocketServer } from "ws";
-import { randomUUID } from "crypto";
+const { WebSocketServer } = require("ws");
+const { randomUUID } = require("crypto");
 
 const PORT = process.env.PORT || 3000;
 
@@ -34,20 +34,17 @@ wss.on("connection", ws => {
 
   console.log("Pemain masuk:", id);
 
-  // Kirim data awal ke pemain baru
   ws.send(JSON.stringify({
     type: "init",
     id: id,
     players: players
   }));
 
-  // Beritahu pemain lain bahwa pemain baru masuk
   broadcast({
     type: "player_join",
     player: players[id]
   });
 
-  // Saat pesan diterima dari client
   ws.on("message", msg => {
     try {
       const data = JSON.parse(msg);
@@ -58,7 +55,6 @@ wss.on("connection", ws => {
           players[id].y = data.y;
         }
 
-        // Broadcast state terbaru
         broadcast({
           type: "update",
           players: players
@@ -66,11 +62,10 @@ wss.on("connection", ws => {
       }
 
     } catch (err) {
-      console.log("Error parsing:", err);
+      console.log("Error:", err);
     }
   });
 
-  // Saat client disconnect
   ws.on("close", () => {
     console.log("Pemain keluar:", id);
     delete players[id];
@@ -80,5 +75,4 @@ wss.on("connection", ws => {
       id: id
     });
   });
-
 });
