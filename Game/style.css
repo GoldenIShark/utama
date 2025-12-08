@@ -1,3 +1,6 @@
+/* =========================================
+   GLOBAL
+========================================= */
 html, body {
   margin: 0;
   padding: 0;
@@ -5,12 +8,12 @@ html, body {
   background: #081620;
 }
 
-/* --- GAME SCREEN RATIO 16:9 --- */
+/* =========================================
+   GAME SCREEN 16:9
+========================================= */
 .game-container {
   position: fixed;
-  width: 100vw;
-  height: 100vh;
-
+  inset: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -22,16 +25,17 @@ html, body {
   height: calc(100vw * 9 / 16);
   max-height: 100vh;
   max-width: calc(100vh * 16 / 9);
-  position: relative;
   z-index: 1;
 }
 
-/* --- JOYSTICK LEFT BOTTOM --- */
+/* =========================================
+   JOYSTICK (Left Bottom)
+========================================= */
 .joystick-zone {
   position: fixed;
   bottom: 20px;
   left: 20px;
-  z-index: 10;
+  z-index: 20;
 }
 
 .joystick {
@@ -41,7 +45,6 @@ html, body {
   background: #0a1f2e;
   position: relative;
   touch-action: none;
-  z-index: 10;
 }
 
 .joy-base {
@@ -52,7 +55,6 @@ html, body {
   position: absolute;
   top: 10%;
   left: 10%;
-  z-index: 10;
 }
 
 .joy-knob {
@@ -64,62 +66,86 @@ html, body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10;
-}
-
-/* --- BOOST BUTTON --- */
-#boostBtn {
-    position: absolute;
-    bottom: 60px;
-    right: 60px;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: rgba(255, 255, 0, 0.3);
-    border: 3px solid yellow;
-    color: white;
-    font-size: 20px;
-    text-shadow: 0 0 3px black;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    touch-action: none;
-    z-index: 10;
 }
 
 #boostBtn:active {
-    background: rgba(255, 255, 0, 0.6);
+  background: rgba(255, 255, 0, 0.6);
 }
 
-/* --- HP & MANA BARS --- */
+/* =========================================
+   HP & MANA BARS (Top Left)
+========================================= */
 #uiBars {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 300px;
-    z-index: 2;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 120px;
+  z-index: 30;
 }
 
 .bar {
-    width: 100%;
-    height: 20px;
-    background: #333;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    overflow: hidden;
+  width: 100%;
+  height: 18px;
+  background: #222;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
 }
 
 .fill {
-    height: 100%;
-    width: 100%;
-    transition: width 0.15s linear;
+  height: 100%;
+  width: 100%;
+  transition: width 0.15s linear;
 }
 
-#hpFill {
-    background: red;
+#hpFill { background: red; }
+#manaFill { background: #0084ff; }
+
+/* ============================
+   SKILL CLUSTER (Mobile Legends)
+   ============================ */
+#skillCluster {
+    position: absolute;
+    bottom: 0;
+    right: 60px;
+
+    width: 170px;
+    height: 180px;
+
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: 60px 80px;
+    gap: 12px;
+
+    z-index: 20;
 }
 
-#manaFill {
-    background: blue;
+/* Tombol kecil (Skill 1,2,3) */
+.skillBtn.small {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    border: 2px solid #fff8;
+    color: white;
+    font-size: 14px;
+    backdrop-filter: blur(4px);
+}
+
+/* Tombol Besar (Basic Attack) */
+.skillBtn.big {
+    grid-column: 2 / 3;
+    width: 80px;
+    height: 80px;
+    justify-self: center;
+
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    border: 3px solid white;
+    color: white;
+    font-size: 20px;
+}
+
+.skillBtn:active {
+    background: rgba(255,255,255,0.6);
 }
