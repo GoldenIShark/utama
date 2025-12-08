@@ -1,37 +1,40 @@
-import { WebSocketServer } from "ws";
+const express = require("express");
+const path = require("path");
+const app = express();
+const http = require("http").createServer(app);
+const WebSocket = require("ws");
 
-const PORT = process.env.PORT || 3000;
-const wss = new WebSocketServer({ port: PORT });
+const wss = new WebSocket.Server({ server: http });
 
-console.log("WebSocket server running on port", PORT);
-
+// ==== Multiplayer memory sementara ====
 let players = {};
 
 wss.on("connection", ws => {
-    const id = Date.now() + "_" + Math.floor(Math.random() * 9999);
-    players[id] = { x: 0, y: 0 };
-
-    ws.send(JSON.stringify({ type: "welcome", id }));
+    console.log("Player connected");
 
     ws.on("message", msg => {
         const data = JSON.parse(msg);
+        
+        // Simpan posisi player
+        players[data.id] = data;
 
-        if (data.type === "move") {
-            players[id].x = data.x;
-            players[id].y = data.y;
-        }
-
-        wss.clients.forEach(c => {
-            if (c.readyState === 1) {
-                c.send(JSON.stringify({
-                    type: "state",
-                    players
-                }));
+        // Broadcast ke semua player
+        wss.clients.forEach(client => {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(data));
             }
         });
     });
 
     ws.on("close", () => {
-        delete players[id];
+        console.log("Player disconnected");
     });
+});
+
+// ==== Serve file HTML Game ====
+app.use(express.static(path.join(__dirname)));
+
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => {
+    console.log("Server running on port", PORT);
 });
