@@ -1,3 +1,4 @@
+// game.js (perbaikan dan penataan)
 // =======================================
 // ELEMENT & VARIABLE DECLARATIONS
 // =======================================
@@ -10,28 +11,26 @@ canvas.height = 720;
 
 // Mini-map
 const mini = document.getElementById("miniMap");
-const mCtx = mini.getContext("2d");
-const MINI_SIZE = 80;   // area tile sekitar player
-const MINI_PIX = 80;    // ukuran canvas miniMap
+const mCtx = mini ? mini.getContext("2d") : null;
+const MINI_SIZE = 80;   // area tile sekitar player (tile count)
+const MINI_PIX = mini ? (mini.width || 80) : 80;    // pixel size
 let scaleMini = MINI_PIX / MINI_SIZE;
 
 // UI bar HP dan Mana
 const hpFill = document.getElementById("hpFill");
 const manaFill = document.getElementById("manaFill");
 
-// Tombol aksi
-const btnJump = document.getElementById("btnJump");
+// Tombol aksi (guard jika tidak ada)
+const btnJump   = document.getElementById("btnJump");
 const btnAttack = document.getElementById("btnAttack");
-const btnDash  = document.getElementById("btnDash");
-const btnBoost = document.getElementById("btnBoost");
+const btnDash   = document.getElementById("btnDash");
+const btnBoost  = document.getElementById("btnBoost");
 
 // =======================================
 // WEBSOCKET / MULTIPLAYER
 // =======================================
-// konfigurasi WS: bisa di-override dari HTML sebelum memuat script:
-// window.WS_URL = "wss://your-server.example";
+// WS URL bisa di-override: <script>window.WS_URL="wss://..."</script>
 const DEFAULT_WS = (() => {
-  // coba gunakan hostname saat ini (berguna jika hosting + server ws sama host)
   try {
     const host = location.hostname;
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
@@ -51,6 +50,7 @@ let lastMoveSend = 0;
 const MOVE_SEND_INTERVAL = 50; // ms
 
 function wsConnect() {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
   try {
     ws = new WebSocket(WS_URL);
   } catch (e) {
@@ -62,7 +62,6 @@ function wsConnect() {
   ws.addEventListener("open", () => {
     console.log("WS open ->", WS_URL);
     wsConnected = true;
-    // request full sync (optional)
     sendWS({ type: "hello" });
   });
 
@@ -84,36 +83,26 @@ function wsConnect() {
 
   ws.addEventListener("error", err => {
     console.warn("WS error:", err);
-    // close will trigger reconnect
   });
 }
 
 function sendWS(obj) {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
-  try {
-    ws.send(JSON.stringify(obj));
-  } catch (e) {
-    // ignore
-  }
+  try { ws.send(JSON.stringify(obj)); } catch (e) { /* ignore */ }
 }
 
 function handleWSMessage(data) {
-  // expected types: init, player_join, update, player_leave
   if (!data || !data.type) return;
   if (data.type === "init") {
-    // {type:"init", id: "xxx", players: {id:{...}}}
     clientId = data.id;
     otherPlayers = data.players || {};
-    // ensure we don't include ourself as otherPlayers
     if (clientId && otherPlayers[clientId]) delete otherPlayers[clientId];
     console.log("WS init id=", clientId, "players=", Object.keys(otherPlayers).length);
   } else if (data.type === "player_join") {
     const p = data.player;
     if (p && p.id && p.id !== clientId) otherPlayers[p.id] = p;
   } else if (data.type === "update") {
-    // {type:"update", players: {...}}
     const players = data.players || {};
-    // replace otherPlayers but remove our own id
     otherPlayers = {};
     Object.keys(players).forEach(k => {
       if (k === clientId) return;
@@ -121,12 +110,9 @@ function handleWSMessage(data) {
     });
   } else if (data.type === "player_leave") {
     if (data.id && otherPlayers[data.id]) delete otherPlayers[data.id];
-  } else if (data.type === "pong") {
-    // ignore
   }
 }
 
-// helper setiap loop untuk kirim posisi (throttled)
 function maybeSendPosition(now) {
   if (!wsConnected || !clientId) return;
   const ms = now;
@@ -141,6 +127,11 @@ function maybeSendPosition(now) {
     ts: Date.now()
   });
 }
+
+// =======================================
+// FALLBACK / STATE
+// =======================================
+window.joyInput = window.joyInput || { x: 0, y: 0, magnitude: 0 }; // joystick fallback
 
 // =======================================
 // PLAYER STATUS & ENERGY
@@ -207,30 +198,13 @@ document.addEventListener("keyup", e => {
     if (e.key === "Shift") boostKeyDown = false;
 });
 
-// Jump
-btnJump && (btnJump.ontouchstart = () => startJump());
-
-// Attack
-btnAttack && (btnAttack.ontouchstart = () => startAttack());
-
-// Dash
-if (btnDash) {
-  btnDash.addEventListener("touchstart", e => {
-    e.preventDefault();
-    startDash();
-  });
-}
-
-// Sprint (lari)
+// safe touch bindings (only if elements exist)
+if (btnJump)   btnJump.addEventListener("touchstart", e => { e.preventDefault(); startJump(); });
+if (btnAttack) btnAttack.addEventListener("touchstart", e => { e.preventDefault(); startAttack(); });
+if (btnDash)   btnDash.addEventListener("touchstart", e => { e.preventDefault(); startDash(); });
 if (btnBoost) {
-  btnBoost.addEventListener("touchstart", e => {
-    e.preventDefault();
-    boostKeyDown = true;
-  });
-  btnBoost.addEventListener("touchend", e => {
-    e.preventDefault();
-    boostKeyDown = false;
-  });
+  btnBoost.addEventListener("touchstart", e => { e.preventDefault(); boostKeyDown = true; });
+  btnBoost.addEventListener("touchend",   e => { e.preventDefault(); boostKeyDown = false; });
 }
 
 // =======================================
@@ -244,7 +218,7 @@ function updateEnergy(dt) {
         boosting = true;
         if (drainTimer >= 0.1) {
             drainTimer = 0;
-            playerEnergy -= 1.5;
+            playerEnergy -= 1.5; // sesuai request 1.5% / 0.1s
             if (playerEnergy < 0) playerEnergy = 0;
         }
         regenTimer = 0;
@@ -252,7 +226,7 @@ function updateEnergy(dt) {
         boosting = false;
         if (regenTimer >= 0.1) {
             regenTimer = 0;
-            playerEnergy += 0.5;
+            playerEnergy += 0.5; // 0.5% / 0.1s
             if (playerEnergy > 100) playerEnergy = 100;
         }
         drainTimer = 0;
@@ -264,11 +238,13 @@ function updateEnergy(dt) {
 // =======================================
 function loadTilemap(url) {
     fetch(url)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+        })
         .then(data => {
-            window.tilemap = data.tiles || data;
+            window.tilemap = data.tiles && Array.isArray(data.tiles) ? data.tiles : (Array.isArray(data) ? data : data.tiles || []);
             window.mapLoaded = true;
-            // kalau tilemap berhasil, posisikan player di tengah
             if (tilemap && tilemap[0]) {
               world.x = (tilemap[0].length * TILE_SIZE) / 2;
               world.y = (tilemap.length * TILE_SIZE) / 2;
@@ -281,7 +257,7 @@ function loadTilemap(url) {
         })
         .catch(err => {
             console.error("Failed to load map:", err);
-            // tetap coba konek ws
+            window.mapLoaded = false;
             setTimeout(wsConnect, 2000);
         });
 }
@@ -299,31 +275,25 @@ function canWalk(wx, wy) {
 }
 
 // =======================================
-// drawTilemap
+// drawTilemap (fixed loops & bounds)
 // =======================================
 function drawTilemap() {
-
-    if (!window.mapLoaded || !tilemap || tilemap.length === 0)
-        return;
+    if (!window.mapLoaded || !tilemap || tilemap.length === 0) return;
 
     const R = 200;
 
     const startX = Math.floor((camera.x - R) / TILE_SIZE);
     const endX   = Math.floor((camera.x + canvas.width / ZOOM + R) / TILE_SIZE);
-
     const startY = Math.floor((camera.y - R) / TILE_SIZE);
     const endY   = Math.floor((camera.y + canvas.height / ZOOM + R) / TILE_SIZE);
 
-    for (let y = startX < 0 ? 0 : startY; y <= endY; y++) {
+    for (let y = startY; y <= endY; y++) {
         if (y < 0 || y >= tilemap.length) continue;
-
         for (let x = startX; x <= endX; x++) {
             if (x < 0 || x >= tilemap[0].length) continue;
-
             const id = tilemap[y][x];
             const sx = x * TILE_SIZE - camera.x;
             const sy = y * TILE_SIZE - camera.y;
-
             ctx.fillStyle = TILE_COLOR[id] || "#333";
             ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
         }
@@ -334,7 +304,7 @@ function drawTilemap() {
 // MINI MAP
 // =======================================
 function drawMiniMap() {
-    if (!window.mapLoaded) return;
+    if (!mCtx || !window.mapLoaded) return;
     mCtx.clearRect(0, 0, MINI_PIX, MINI_PIX);
     const pTileX = Math.floor(world.x / TILE_SIZE);
     const pTileY = Math.floor(world.y / TILE_SIZE);
@@ -351,26 +321,29 @@ function drawMiniMap() {
             mCtx.fillStyle = TILE_COLOR[id] || "#000";
             const drawX = (x - (pTileX - half)) * scaleMini;
             const drawY = (y - (pTileY - half)) * scaleMini;
-            mCtx.fillRect(drawX, drawY, Math.max(1, scaleMini), Math.max(1, scaleMini));
+            mCtx.fillRect(Math.floor(drawX), Math.floor(drawY), Math.max(1, Math.ceil(scaleMini)), Math.max(1, Math.ceil(scaleMini)));
         }
     }
-    // player marker
-    mCtx.fillStyle = "red";
-    mCtx.fillRect(MINI_PIX / 2 - 3, MINI_PIX / 2 - 3, 6, 6);
 
-    // render other players as small white dots relative to mini center
+    // player marker (center)
+    mCtx.fillStyle = "red";
+    mCtx.fillRect(Math.round(MINI_PIX / 2 - 3), Math.round(MINI_PIX / 2 - 3), 6, 6);
+
+    // other players dots
     Object.values(otherPlayers).forEach(p => {
         const dx = (p.x / TILE_SIZE) - pTileX + half;
         const dy = (p.y / TILE_SIZE) - pTileY + half;
-        const drawX = dx * scaleMini;
-        const drawY = dy * scaleMini;
-        mCtx.fillStyle = "white";
-        mCtx.fillRect(Math.round(drawX), Math.round(drawY), 3, 3);
+        const drawX = Math.round(dx * scaleMini);
+        const drawY = Math.round(dy * scaleMini);
+        if (drawX >= 0 && drawX < MINI_PIX && drawY >= 0 && drawY < MINI_PIX) {
+            mCtx.fillStyle = "white";
+            mCtx.fillRect(drawX, drawY, 3, 3);
+        }
     });
 }
 
 // =======================================
-// ANIMATION
+// ANIMATION LOADER
 // =======================================
 function loadAnim(folder, dirs, frameCount) {
     let obj = {};
@@ -403,24 +376,14 @@ let player = {
 // PLAYER DIRECTION & MOVEMENT
 // =======================================
 function getDir() {
-    if (joyInput.y < -0.5) return "atas";
-    if (joyInput.y > 0.5) return "bawah";
-    if (joyInput.x > 0.5) return "kanan";
-    if (joyInput.x < -0.5) return "kiri";
+    if (window.joyInput.y < -0.5) return "atas";
+    if (window.joyInput.y > 0.5) return "bawah";
+    if (window.joyInput.x > 0.5) return "kanan";
+    if (window.joyInput.x < -0.5) return "kiri";
     return null;
 }
 
-if (btnBoost) {
-  btnBoost.addEventListener("touchstart", e => {
-      e.preventDefault();
-      boostKeyDown = true;  // mulai lari
-  });
-
-  btnBoost.addEventListener("touchend", e => {
-      e.preventDefault();
-      boostKeyDown = false; // berhenti lari
-  });
-}
+// sprint guard (if btnBoost exists, listeners already bound above)
 
 // =======================================
 // ACTIONS (JUMP / ATTACK / DASH)
@@ -458,13 +421,12 @@ function updatePlayer(dt) {
         if (player.frameTime >= player.frameSpeed) {
             player.frameTime = 0;
             player.frame++;
-            if (player.frame >= anim.serang[player.dir].length) {
+            if (player.frame >= (anim.serang[player.dir]||[]).length) {
                 isAttacking = false;
                 player.state = "diam";
                 player.frame = 0;
             }
         }
-        // still allow movement while attacking? currently returning (no move)
         return;
     }
 
@@ -510,7 +472,7 @@ function updatePlayer(dt) {
     if (player.frameTime >= player.frameSpeed) {
         player.frameTime = 0;
         player.frame++;
-        let frames = anim[player.state][player.dir];
+        let frames = anim[player.state][player.dir] || [];
         if (player.frame >= frames.length) player.frame = 0;
     }
 }
@@ -519,26 +481,20 @@ function updatePlayer(dt) {
 // DRAW OTHER PLAYERS
 // =======================================
 function drawOtherPlayers() {
-  // render simple markers for remote players
   Object.values(otherPlayers).forEach(p => {
     if (!p) return;
     const ox = p.x - camera.x;
     const oy = p.y - camera.y;
-    // draw shadow
     ctx.globalAlpha = 0.25;
     ctx.fillStyle = "black";
     ctx.beginPath();
     ctx.ellipse(ox, oy + 14, 8, 4, 0, 0, Math.PI*2);
     ctx.fill();
     ctx.globalAlpha = 1;
-
-    // body as circle
     ctx.fillStyle = "#fff";
     ctx.beginPath();
     ctx.arc(ox, oy, 8, 0, Math.PI*2);
     ctx.fill();
-
-    // direction indicator (small line)
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -557,8 +513,8 @@ function drawOtherPlayers() {
 // DRAW PLAYER
 // =======================================
 function drawPlayer() {
-    let frames = anim[player.state][player.dir];
-    if (!frames) return;
+    let frames = anim[player.state][player.dir] || [];
+    if (frames.length === 0) return;
     let img = frames[player.frame];
     if (!img || !img.complete) return;
     let px = world.x - camera.x - 16;
@@ -621,7 +577,40 @@ function loop(now) {
 }
 
 // =======================================
-// LOAD MAP & START GAME
+// MAP LOADER SYSTEM (DECLARED BEFORE CALL)
+// =======================================
+const MAP_LIST = {
+    sumatra:   "map/sumatra.json",
+    jawa:      "map/jawa.json",
+    kalimantan:"map/kalimantan.json",
+    sulawesi:  "map/sulawesi.json",
+    papua:     "map/papua.json"
+};
+
+window.currentMap = "";
+
+window.loadRegion = function(regionName) {
+    if (!MAP_LIST[regionName]) {
+        console.error("Map tidak ditemukan:", regionName);
+        return;
+    }
+    const mapURL = MAP_LIST[regionName];
+    console.log("📌 Loading region:", regionName, "->", mapURL);
+
+    window.mapLoaded = false;
+    window.tilemap = [];
+
+    loadTilemap(mapURL);
+
+    // reset posisi player (sementara) -> akan di-overwrite oleh loadTilemap center
+    world.x = 0;
+    world.y = 0;
+
+    currentMap = regionName;
+};
+
+// =======================================
+// START (panggil setelah semua definisi selesai)
 // =======================================
 loadRegion("jawa");
 requestAnimationFrame(loop);
