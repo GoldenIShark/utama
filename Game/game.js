@@ -2,22 +2,6 @@
 // ELEMENT & VARIABLE DECLARATIONS
 // =======================================
 
-const socket = new WebSocket("wss://nama-repl-kamu.repl.co");
-
-let myID = Math.random().toString(36).slice(2);
-
-socket.onopen = () => {
-    console.log("Connected to multiplayer server");
-};
-
-socket.send(JSON.stringify({
-    id: myID,
-    x: world.x,
-    y: world.y,
-    dir: player.dir,
-    state: player.state
-}));
-
 // Canvas utama
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -40,6 +24,123 @@ const btnJump = document.getElementById("btnJump");
 const btnAttack = document.getElementById("btnAttack");
 const btnDash  = document.getElementById("btnDash");
 const btnBoost = document.getElementById("btnBoost");
+
+// =======================================
+// WEBSOCKET / MULTIPLAYER
+// =======================================
+// konfigurasi WS: bisa di-override dari HTML sebelum memuat script:
+// window.WS_URL = "wss://your-server.example";
+const DEFAULT_WS = (() => {
+  // coba gunakan hostname saat ini (berguna jika hosting + server ws sama host)
+  try {
+    const host = location.hostname;
+    const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${host}`;
+  } catch (e) {
+    return "ws://localhost:3000";
+  }
+})();
+const WS_URL = window.WS_URL || DEFAULT_WS;
+let ws = null;
+let wsConnected = false;
+let clientId = null;
+let otherPlayers = {}; // id -> {id,x,y,dir,ts}
+
+// Throttle send move
+let lastMoveSend = 0;
+const MOVE_SEND_INTERVAL = 50; // ms
+
+function wsConnect() {
+  try {
+    ws = new WebSocket(WS_URL);
+  } catch (e) {
+    console.warn("WS create failed:", e);
+    setTimeout(wsConnect, 2000);
+    return;
+  }
+
+  ws.addEventListener("open", () => {
+    console.log("WS open ->", WS_URL);
+    wsConnected = true;
+    // request full sync (optional)
+    sendWS({ type: "hello" });
+  });
+
+  ws.addEventListener("message", ev => {
+    try {
+      const data = JSON.parse(ev.data);
+      handleWSMessage(data);
+    } catch (err) {
+      console.warn("WS parse err", err);
+    }
+  });
+
+  ws.addEventListener("close", () => {
+    console.log("WS closed, reconnect in 2s");
+    wsConnected = false;
+    clientId = null;
+    setTimeout(wsConnect, 2000);
+  });
+
+  ws.addEventListener("error", err => {
+    console.warn("WS error:", err);
+    // close will trigger reconnect
+  });
+}
+
+function sendWS(obj) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  try {
+    ws.send(JSON.stringify(obj));
+  } catch (e) {
+    // ignore
+  }
+}
+
+function handleWSMessage(data) {
+  // expected types: init, player_join, update, player_leave
+  if (!data || !data.type) return;
+  if (data.type === "init") {
+    // {type:"init", id: "xxx", players: {id:{...}}}
+    clientId = data.id;
+    otherPlayers = data.players || {};
+    // ensure we don't include ourself as otherPlayers
+    if (clientId && otherPlayers[clientId]) delete otherPlayers[clientId];
+    console.log("WS init id=", clientId, "players=", Object.keys(otherPlayers).length);
+  } else if (data.type === "player_join") {
+    const p = data.player;
+    if (p && p.id && p.id !== clientId) otherPlayers[p.id] = p;
+  } else if (data.type === "update") {
+    // {type:"update", players: {...}}
+    const players = data.players || {};
+    // replace otherPlayers but remove our own id
+    otherPlayers = {};
+    Object.keys(players).forEach(k => {
+      if (k === clientId) return;
+      otherPlayers[k] = players[k];
+    });
+  } else if (data.type === "player_leave") {
+    if (data.id && otherPlayers[data.id]) delete otherPlayers[data.id];
+  } else if (data.type === "pong") {
+    // ignore
+  }
+}
+
+// helper setiap loop untuk kirim posisi (throttled)
+function maybeSendPosition(now) {
+  if (!wsConnected || !clientId) return;
+  const ms = now;
+  if (ms - lastMoveSend < MOVE_SEND_INTERVAL) return;
+  lastMoveSend = ms;
+  sendWS({
+    type: "move",
+    x: Math.round(world.x),
+    y: Math.round(world.y),
+    z: Math.round(world.z || 0),
+    dir: player.dir || "bawah",
+    ts: Date.now()
+  });
+}
 
 // =======================================
 // PLAYER STATUS & ENERGY
@@ -107,27 +208,30 @@ document.addEventListener("keyup", e => {
 });
 
 // Jump
-btnJump.ontouchstart = () => startJump();
+btnJump && (btnJump.ontouchstart = () => startJump());
 
 // Attack
-btnAttack.ontouchstart = () => startAttack();
+btnAttack && (btnAttack.ontouchstart = () => startAttack());
 
 // Dash
-btnDash.addEventListener("touchstart", e => {
+if (btnDash) {
+  btnDash.addEventListener("touchstart", e => {
     e.preventDefault();
     startDash();
-});
+  });
+}
 
 // Sprint (lari)
-btnBoost.addEventListener("touchstart", e => {
+if (btnBoost) {
+  btnBoost.addEventListener("touchstart", e => {
     e.preventDefault();
     boostKeyDown = true;
-});
-btnBoost.addEventListener("touchend", e => {
+  });
+  btnBoost.addEventListener("touchend", e => {
     e.preventDefault();
     boostKeyDown = false;
-});
-
+  });
+}
 
 // =======================================
 // ENERGY SYSTEM
@@ -164,11 +268,22 @@ function loadTilemap(url) {
         .then(data => {
             window.tilemap = data.tiles || data;
             window.mapLoaded = true;
-            world.x = (tilemap[0].length * TILE_SIZE) / 2;
-            world.y = (tilemap.length * TILE_SIZE) / 2;
-            console.log("Tilemap loaded:", tilemap.length, "x", tilemap[0].length);
+            // kalau tilemap berhasil, posisikan player di tengah
+            if (tilemap && tilemap[0]) {
+              world.x = (tilemap[0].length * TILE_SIZE) / 2;
+              world.y = (tilemap.length * TILE_SIZE) / 2;
+            } else {
+              world.x = 0; world.y = 0;
+            }
+            console.log("Tilemap loaded:", tilemap.length, "x", tilemap[0]?.length);
+            // connect WS setelah peta siap agar pemain spawn setelah map terload
+            setTimeout(wsConnect, 50);
         })
-        .catch(err => console.error("Failed to load map:", err));
+        .catch(err => {
+            console.error("Failed to load map:", err);
+            // tetap coba konek ws
+            setTimeout(wsConnect, 2000);
+        });
 }
 
 // =======================================
@@ -199,7 +314,7 @@ function drawTilemap() {
     const startY = Math.floor((camera.y - R) / TILE_SIZE);
     const endY   = Math.floor((camera.y + canvas.height / ZOOM + R) / TILE_SIZE);
 
-    for (let y = startY; y <= endY; y++) {
+    for (let y = startX < 0 ? 0 : startY; y <= endY; y++) {
         if (y < 0 || y >= tilemap.length) continue;
 
         for (let x = startX; x <= endX; x++) {
@@ -219,7 +334,7 @@ function drawTilemap() {
 // MINI MAP
 // =======================================
 function drawMiniMap() {
-    if (!mapLoaded) return;
+    if (!window.mapLoaded) return;
     mCtx.clearRect(0, 0, MINI_PIX, MINI_PIX);
     const pTileX = Math.floor(world.x / TILE_SIZE);
     const pTileY = Math.floor(world.y / TILE_SIZE);
@@ -236,11 +351,22 @@ function drawMiniMap() {
             mCtx.fillStyle = TILE_COLOR[id] || "#000";
             const drawX = (x - (pTileX - half)) * scaleMini;
             const drawY = (y - (pTileY - half)) * scaleMini;
-            mCtx.fillRect(drawX, drawY, scaleMini, scaleMini);
+            mCtx.fillRect(drawX, drawY, Math.max(1, scaleMini), Math.max(1, scaleMini));
         }
     }
+    // player marker
     mCtx.fillStyle = "red";
     mCtx.fillRect(MINI_PIX / 2 - 3, MINI_PIX / 2 - 3, 6, 6);
+
+    // render other players as small white dots relative to mini center
+    Object.values(otherPlayers).forEach(p => {
+        const dx = (p.x / TILE_SIZE) - pTileX + half;
+        const dy = (p.y / TILE_SIZE) - pTileY + half;
+        const drawX = dx * scaleMini;
+        const drawY = dy * scaleMini;
+        mCtx.fillStyle = "white";
+        mCtx.fillRect(Math.round(drawX), Math.round(drawY), 3, 3);
+    });
 }
 
 // =======================================
@@ -284,15 +410,17 @@ function getDir() {
     return null;
 }
 
-btnBoost.addEventListener("touchstart", e => {
-    e.preventDefault();
-    boostKeyDown = true;  // mulai lari
-});
+if (btnBoost) {
+  btnBoost.addEventListener("touchstart", e => {
+      e.preventDefault();
+      boostKeyDown = true;  // mulai lari
+  });
 
-btnBoost.addEventListener("touchend", e => {
-    e.preventDefault();
-    boostKeyDown = false; // berhenti lari
-});
+  btnBoost.addEventListener("touchend", e => {
+      e.preventDefault();
+      boostKeyDown = false; // berhenti lari
+  });
+}
 
 // =======================================
 // ACTIONS (JUMP / ATTACK / DASH)
@@ -336,6 +464,7 @@ function updatePlayer(dt) {
                 player.frame = 0;
             }
         }
+        // still allow movement while attacking? currently returning (no move)
         return;
     }
 
@@ -387,6 +516,44 @@ function updatePlayer(dt) {
 }
 
 // =======================================
+// DRAW OTHER PLAYERS
+// =======================================
+function drawOtherPlayers() {
+  // render simple markers for remote players
+  Object.values(otherPlayers).forEach(p => {
+    if (!p) return;
+    const ox = p.x - camera.x;
+    const oy = p.y - camera.y;
+    // draw shadow
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.ellipse(ox, oy + 14, 8, 4, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // body as circle
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(ox, oy, 8, 0, Math.PI*2);
+    ctx.fill();
+
+    // direction indicator (small line)
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let dx = 0, dy = -8;
+    if (p.dir === "atas") { dx = 0; dy = -10; }
+    if (p.dir === "bawah") { dx = 0; dy = 10; }
+    if (p.dir === "kiri") { dx = -10; dy = 0; }
+    if (p.dir === "kanan") { dx = 10; dy = 0; }
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + dx, oy + dy);
+    ctx.stroke();
+  });
+}
+
+// =======================================
 // DRAW PLAYER
 // =======================================
 function drawPlayer() {
@@ -409,8 +576,8 @@ function drawPlayer() {
 // UPDATE UI BARS
 // =======================================
 function updateBars() {
-    hpFill.style.width = playerHP + "%";
-    manaFill.style.width = playerEnergy + "%";
+    if (hpFill) hpFill.style.width = playerHP + "%";
+    if (manaFill) manaFill.style.width = playerEnergy + "%";
 }
 
 // =======================================
@@ -427,22 +594,28 @@ function loop(now) {
         ctx.fillStyle = "white";
         ctx.font = "32px Arial";
         ctx.fillText("Loading map...", canvas.width / 2 - 120, canvas.height / 2);
-        return requestAnimationFrame(loop);
+        requestAnimationFrame(loop);
+        return;
     }
 
     updateEnergy(dt);
     updatePlayer(dt);
+
     camera.x = world.x - canvas.width / (2 * ZOOM);
     camera.y = world.y - canvas.height / (2 * ZOOM);
 
     ctx.save();
     ctx.scale(ZOOM, ZOOM);
     drawTilemap();
+    drawOtherPlayers();
     drawPlayer();
     ctx.restore();
 
     drawMiniMap();
     updateBars();
+
+    // multiplayer: kirim posisi (throttled)
+    maybeSendPosition(performance.now());
 
     requestAnimationFrame(loop);
 }
