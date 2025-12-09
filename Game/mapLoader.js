@@ -1,8 +1,3 @@
-// =============================
-// MAP LOADER SYSTEM
-// =============================
-
-// daftar map (silakan isi nanti setelah map dibuat)
 const MAP_LIST = {
     sumatra:   "map/sumatra.json",
     jawa:      "map/jawa.json",
@@ -11,28 +6,24 @@ const MAP_LIST = {
     papua:     "map/papua.json"
 };
 
-window.currentMap = "";
+function loadTilemap(url) {
+    return fetch(url)
+        .then(r => r.json())
+        .catch(e => console.error("Map load error", e));
+}
 
-// fungsi utama untuk mengganti map
-window.loadRegion = function(regionName) {
+window.loadRegion = async function(region) {
+    const file = MAP_LIST[region];
+    if (!file) return console.error("Map tidak ditemukan:", region);
 
-    if (!MAP_LIST[regionName]) {
-        console.error("Map tidak ditemukan:", regionName);
-        return;
-    }
+    console.log("Load map:", file);
+    const data = await loadTilemap(file);
 
-    const mapURL = MAP_LIST[regionName];
-    console.log("📌 Loading region:", regionName, "->", mapURL);
+    window.tilemap = data;
+    window.mapLoaded = true;
 
-    window.mapLoaded = false;
-    window.tilemap = [];
+    world.x = tilemap[0].length * 24;
+    world.y = tilemap.length * 24;
 
-    // panggil loader asli dari game.js
-    loadTilemap(mapURL);
-
-    // reset posisi player
-    world.x = 2000;
-    world.y = 2000;
-
-    currentMap = regionName;
+    console.log("Map loaded:", tilemap.length, "x", tilemap[0].length);
 };
