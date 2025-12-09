@@ -1,151 +1,85 @@
-/* =========================================
-   GLOBAL
-========================================= */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background: #081620;
+body {
+    background:#111;
+    margin:0;
+    overflow:hidden;
+    font-family:sans-serif;
 }
 
-/* =========================================
-   GAME SCREEN 16:9
-========================================= */
-.game-container {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#gameCanvas {
-  background: #0f2233;
-  width: 100vw;
-  height: calc(100vw * 9 / 16);
-  max-height: 100vh;
-  max-width: calc(100vh * 16 / 9);
-  z-index: 1;
-}
-
-/* =========================================
-   JOYSTICK (Left Bottom)
-========================================= */
-.joystick-zone {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  z-index: 20;
-}
-
-.joystick {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: #0a1f2e;
-  position: relative;
-  touch-action: none;
-}
-
-.joy-base {
-  width: 80%;
-  height: 80%;
-  border-radius: 50%;
-  background: #092434;
-  position: absolute;
-  top: 10%;
-  left: 10%;
-}
-
-.joy-knob {
-  width: 40px;
-  height: 40px;
-  background: #32cd32;
-  border-radius: 50%;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-#boostBtn:active {
-  background: rgba(255, 255, 0, 0.6);
-}
-
-/* =========================================
-   HP & MANA BARS (Top Left)
-========================================= */
 #uiBars {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  width: 120px;
-  z-index: 30;
+    position:absolute;
+    top:10px;
+    left:10px;
+    width:200px;
 }
 
 .bar {
-  width: 100%;
-  height: 18px;
-  background: #222;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  overflow: hidden;
+    width:100%;
+    height:10px;
+    background:#333;
+    margin-bottom:4px;
 }
-
 .fill {
-  height: 100%;
-  width: 100%;
-  transition: width 0.15s linear;
+    height:100%;
+    background:#0f0;
 }
 
-#hpFill { background: red; }
-#manaFill { background: #0084ff; }
+.skillBtn {
+    border:none;
+    border-radius:50%;
+    background:#444;
+    color:#fff;
+    position:absolute;
+}
 
-/* ============================
-   SKILL CLUSTER (Mobile Legends)
-   ============================ */
+.small { width:55px; height:55px; font-size:10px; }
+.big   { width:80px; height:80px; font-size:12px; }
+
 #skillCluster {
-    position: absolute;
-    bottom: 0;
-    right: 60px;
-
-    width: 170px;
-    height: 180px;
-
-    display: grid;
-    grid-template-columns: repeat(3, 60px);
-    grid-template-rows: 60px 80px;
-    gap: 12px;
-
-    z-index: 20;
+    position:absolute;
+    bottom:40px;
+    right:40px;
 }
 
-/* Tombol kecil (Skill 1,2,3) */
-.skillBtn.small {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.25);
-    border: 2px solid #fff8;
-    color: white;
-    font-size: 14px;
-    backdrop-filter: blur(4px);
+#btnDash  { right:140px; bottom:120px; }
+#btnBoost { right:70px;  bottom:140px; }
+#btnJump  { right:140px; bottom:50px;  }
+#btnAttack{ right:0px;   bottom:0px;   }
+
+.game-container {
+    position:absolute;
+    inset:0;
 }
 
-/* Tombol Besar (Basic Attack) */
-.skillBtn.big {
-    grid-column: 2 / 3;
-    width: 80px;
-    height: 80px;
-    justify-self: center;
-
-    border-radius: 50%;
-    background: rgba(255,255,255,0.4);
-    border: 3px solid white;
-    color: white;
-    font-size: 20px;
+.joystick-zone {
+    position:absolute;
+    bottom:20px;
+    left:20px;
+    width:160px;
+    height:160px;
 }
 
-.skillBtn:active {
-    background: rgba(255,255,255,0.6);
+.joystick {
+    width:160px;
+    height:160px;
+    position:relative;
+}
+
+.joy-base {
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    background:#222;
+    opacity:0.6;
+    position:absolute;
+}
+
+.joy-knob {
+    width:60px;
+    height:60px;
+    background:#eee;
+    opacity:0.9;
+    border-radius:50%;
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
 }
