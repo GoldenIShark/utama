@@ -2,49 +2,33 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Game Tilemap + Joystick</title>
-
-  <style>
-    @media screen and (orientation: portrait) {
-      body::before {
-        content: "Putar HP ke landscape";
-        position: fixed;
-        inset: 0;
-        background: #000;
-        color: #fff;
-        font-size: 20px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 5000;
-      }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+  <title>Game Multiplayer</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
+<!-- Mini Map -->
 <canvas id="miniMap" width="80" height="80"
-        style="position:absolute; top:20px; right:40px;
-               border:2px solid #fff; background:#0008; z-index:10;">
+  style="position:absolute;top:20px;right:40px;border:2px solid #fff;background:#0008;z-index:10;">
 </canvas>
 
+<!-- UI Bars -->
 <div id="uiBars">
   <div class="bar"><div id="hpFill" class="fill"></div></div>
   <div class="bar"><div id="manaFill" class="fill"></div></div>
 </div>
 
+<!-- Buttons -->
 <div id="skillCluster">
-
-    <button id="btnDash" class="skillBtn small">DASH</button>
-    <button id="btnBoost" class="skillBtn small">LARI</button>
-    <button id="btnJump" class="skillBtn small">JUMP</button>
-    <button id="btnAttack" class="skillBtn big">ATK</button>
+  <button id="btnDash" class="skillBtn small">Dash</button>
+  <button id="btnBoost" class="skillBtn small">LARI</button>
+  <button id="btnJump" class="skillBtn small">LONCAT</button>
+  <button id="btnAttack" class="skillBtn big">ATTACK</button>
 </div>
 
+<!-- Game Container -->
 <div class="game-container">
   <canvas id="gameCanvas"></canvas>
 
@@ -56,8 +40,12 @@
   </div>
 </div>
 
-<script src="tileset.js"></script>
+<script>
+  window.WS_URL = "wss://game-multiplayer--ahmadytta02.replit.app";
+</script>
+
 <script src="joystick.js"></script>
+<script src="tileset.js"></script>
 <script src="mapLoader.js"></script>
 <script src="game.js"></script>
 
