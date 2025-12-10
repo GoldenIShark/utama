@@ -1,53 +1,52 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-  <title>Game Multiplayer</title>
-
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Permainan</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- Mini Map -->
-<canvas id="miniMap" width="80" height="80"
-  style="position:absolute;top:20px;right:40px;border:2px solid #fff;background:#0008;z-index:10;">
-</canvas>
-
-<!-- UI Bars -->
-<div id="uiBars">
-  <div class="bar"><div id="hpFill" class="fill"></div></div>
-  <div class="bar"><div id="manaFill" class="fill"></div></div>
-</div>
-
-<!-- Buttons -->
-<div id="skillCluster">
-  <button id="btnDash" class="skillBtn small">Dash</button>
-  <button id="btnBoost" class="skillBtn small">LARI</button>
-  <button id="btnJump" class="skillBtn small">LONCAT</button>
-  <button id="btnAttack" class="skillBtn big">ATTACK</button>
-</div>
-
-<!-- Game Container -->
-<div class="game-container">
-  <canvas id="gameCanvas"></canvas>
-
-  <div class="joystick-zone">
-    <div id="joy" class="joystick">
-      <div class="joy-base"></div>
-      <div id="knob" class="joy-knob"></div>
+    <!-- UI HP & Mana -->
+    <div id="uiBars">
+        <div id="hpBar"><div id="hpFill"></div></div>
+        <div id="manaBar"><div id="manaFill"></div></div>
     </div>
-  </div>
-</div>
 
-<script>
-  window.WS_URL = "wss://game-multiplayer--ahmadytta02.replit.app";
-</script>
+    <!-- Canvas Utama -->
+    <canvas id="gameCanvas"></canvas>
 
-<script src="joystick.js"></script>
-<script src="tileset.js"></script>
-<script src="mapLoader.js"></script>
-<script src="game.js"></script>
+    <!-- Mini Map -->
+    <canvas id="miniMap" width="80" height="80"></canvas>
+
+    <!-- Tombol Aksi -->
+    <div id="controls">
+        <button id="btnJump">Jump</button>
+        <button id="btnAttack">Attack</button>
+        <button id="btnDash">Dash</button>
+        <button id="btnBoost">Boost</button>
+    </div>
+
+    <!-- Joystick -->
+    <div id="joystickContainer">
+        <div id="joystick"></div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- KONFIGURASI WEBSOCKET SERVER DI SINI        -->
+    <!-- =========================================== -->
+    <script>
+        // Pakai server Replit kamu
+        window.WS_URL =
+            "wss://ebf796d6-c786-4e95-8a9b-d70912b2818e-00-16065a0wiqb21.pike.replit.dev";
+    </script>
+
+    <!-- Script permainan -->
+    <script src="joystick.js"></script>
+    <script src="mapLoader.js"></script>
+    <script src="tileset.js"></script>
+    <script src="game.js"></script>
 
 </body>
 </html>
