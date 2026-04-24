@@ -6,7 +6,56 @@ body {
     padding: 0;
 }
 header {
-    background-color: #0a00c1;
+    background-color: #0d00ff;
     padding: 20px;
     text-align: center;
+}
+.menu-icon {
+    width: 60px;
+    height: 60px;
+    position: absolute;
+    left: 20px;
+    top: 25px;
+    background-color: transparent;
+}
+section {
+    position: relative;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(0deg, #5b52ff, #b8b4ff);
+    animation: k01 5s linear infinite;
+}
+@keyframes k01 {
+    0% {
+        background: linear-gradient(0deg, #5b52ff, #b8b4ff);
+    }
+    50% {
+        background: linear-gradient(180deg, #b8b4ff, #5b52ff);
+    }
+    100% {
+        background: linear-gradient(0deg, #5b52ff, #b8b4ff);
+    }
+}
+
+/* Animasi warna bergerak ke atas */
+@keyframes colorMoveUp {
+    0% {
+        background-position: 0% 100%;
+    }
+    50% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 0% 100%;
+    }
+}
+
+/* Animasi gradient berputar ke atas */
+@keyframes gradientMoveUp {
+    0% {
+        background: linear-gradient(180deg, #5b52ff, #b8b4ff);
+    }
+    100% {
+        background: linear-gradient(0deg, #b8b4ff, #5b52ff);
+    }
 }
