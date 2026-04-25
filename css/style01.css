@@ -18,13 +18,21 @@ header {
     top: 25px;
     background-color: transparent;
 }
-section {
-    position: relative;
-    justify-content: center;
-    padding: 20px;
-    background: linear-gradient(0deg, #5b52ff, #b8b4ff);
-    animation: k01 5s linear infinite;
+
+.card {
+    display: block;
+    width: 90%;
+    height: 400px;
+    background-color: white;
+    position: absolute;
+    justify-items: center;
+    align-items: center;
 }
+
+/*
+keyframes
+*/
+
 @keyframes k01 {
     0% {
         background: linear-gradient(0deg, #5b52ff, #b8b4ff);
@@ -37,7 +45,6 @@ section {
     }
 }
 
-/* Animasi warna bergerak ke atas */
 @keyframes colorMoveUp {
     0% {
         background-position: 0% 100%;
